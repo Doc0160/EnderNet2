@@ -1,0 +1,15 @@
+[
+{
+  "modid": "endernet",
+  "name": "EnderNet",
+  "description": "EnderNet - inter-server data transfer",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["asie"],
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
