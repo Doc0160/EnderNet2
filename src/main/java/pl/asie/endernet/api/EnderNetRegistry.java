@@ -1,7 +1,9 @@
 package pl.asie.endernet.api;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -16,33 +18,56 @@ import pl.asie.endernet.EnderNet;
  * @author asie
  */
 public class EnderNetRegistry {
-	public static EnderNetRegistry instance;
-	
-	private final HashSet<Integer> addresses = new HashSet<Integer>();
-	private final HashMap<Integer, Object> objects = new HashMap<Integer, Object>();
-	private int maxAddress = 0;
-	
-	public EnderNetRegistry(File file) {
-		new Gson().fromJson(new FileReader(file), // TODO
+	class RegistryInformation {
+		HashSet<Integer> addresses;
+		int maxAddress;
+		
+		public void init() {
+			addresses = new HashSet<Integer>();
+			maxAddress = 0;
+		}
+		
+		public void updateAddresses() {
+			if(addresses.contains(maxAddress)) {
+				// New address added, look up
+				while(addresses.contains(maxAddress)) maxAddress++;
+			} else {
+				// Old address removed, look down
+				while(!addresses.contains(maxAddress)) maxAddress--;
+				maxAddress++;
+			}
+		}
 	}
 	
-	private void updateMA() {
-		while(addresses.contains(maxAddress)) maxAddress++;
+	public static EnderNetRegistry instance;
+	
+	private RegistryInformation r;
+	private final HashMap<Integer, Object> objects = new HashMap<Integer, Object>();
+	private final File file;
+	
+	public EnderNetRegistry(File file) {
+		this.file = file;
+		try {
+			r = (RegistryInformation)(EnderNet.gson.fromJson(new FileReader(file), RegistryInformation.class));
+		} catch(FileNotFoundException e) {
+			r = new RegistryInformation();
+			r.init();
+		}
 	}
 	
 	public int register(Object o) {
-		updateMA();
-		int address = maxAddress;
-		addresses.add(address);
+		r.updateAddresses();
+		int address = r.maxAddress;
+		r.addresses.add(address);
 		objects.put(address, o);
-		updateMA();
+		r.updateAddresses();
 		return address;
 	}
 	
 	public void unregister(int address) {
-		addresses.remove(address);
+		r.addresses.remove(address);
 		objects.remove(address);
-		if(address < maxAddress) maxAddress = address;
+		r.updateAddresses();
 	}
 	
 	public Object get(int address) {
@@ -51,7 +76,14 @@ public class EnderNetRegistry {
 	
 	public void set(int address, Object o) {
 		objects.put(address, o);
-		if(maxAddress == address)
-			updateMA();
+		r.updateAddresses();
+	}
+	
+	public void save() {
+		try {
+			EnderNet.gson.toJson(r, new FileWriter(file));
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

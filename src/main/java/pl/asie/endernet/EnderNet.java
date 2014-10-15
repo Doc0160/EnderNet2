@@ -72,5 +72,6 @@ public class EnderNet
     @EventHandler
     public void serverStop(FMLServerStoppingEvent event) {
     	server.stop();
+    	EnderNetRegistry.instance.save();
     }
 }
